@@ -48,6 +48,7 @@ public class RabbitmqConfig {
   public   TopicExchange exchange(){
         return  new TopicExchange("spring-boot-exchage");
 
+
     }
     //将消息队里与exchange 绑定
     @Bean
