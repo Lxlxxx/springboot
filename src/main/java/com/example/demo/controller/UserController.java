@@ -5,6 +5,7 @@ import com.example.demo.dao.PowerRepository;
 import com.example.demo.dao.RoleRepository;
 import com.example.demo.dao.UserRepository;
 import com.example.demo.entity.Power;
+import com.example.demo.entity.Result;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.service.IUserServcie;
@@ -12,13 +13,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,31 +44,38 @@ public class UserController {
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
-    private static  PowerRepository powerRepository;
+    private static PowerRepository powerRepository;
     @Autowired
     IUserServcie iUserServcie;
+
+    @Resource
+    private PlatformTransactionManager ptm;
 
 
     @Autowired
     private Commontils commontils;
 
+    Logger logger = LoggerFactory.getLogger(RootController.class);
+
+
     @RequestMapping(value = "/initData")
     @ResponseBody
-    public void  initData() throws JSONException {
-            commontils.initData();
+    public void initData() throws JSONException {
+        commontils.initData();
 
     }
-    @RequestMapping(value ="/addData")
+
+    @RequestMapping(value = "/addData")
     @ResponseBody
-    public void addData(){
+    public void addData() {
         iUserServcie.saveUser();
     }
 
-        @RequestMapping(value ="/findUserPage",method = RequestMethod.GET)
-    public String findUserPage(ModelMap modelMap,  @RequestParam( value =  " page",defaultValue = "0") Integer page,
-                                   @RequestParam(value = "size",defaultValue = "5") Integer size, User user){
-        Page<User> data =iUserServcie.getUserPage(page, size, user);
-        modelMap.addAttribute("datas",data);
+    @RequestMapping(value = "/findUserPage", method = RequestMethod.GET)
+    public String findUserPage(ModelMap modelMap, @RequestParam(value = " page", defaultValue = "0") Integer page,
+                               @RequestParam(value = "size", defaultValue = "5") Integer size, User user) {
+        Page<User> data = iUserServcie.getUserPage(page, size, user);
+        modelMap.addAttribute("datas", data);
         return "index";
     }
 
@@ -69,75 +84,76 @@ public class UserController {
      *
      *
      */
-    @RequestMapping (value = "/getUser")
+    @RequestMapping(value = "/getUser")
     @ResponseBody
-    public String formatUser(){
+    public String formatUser() {
 
-                    JSONArray jsonArray =new JSONArray();
-                    JSONObject jsonObject =new JSONObject();
-                    try{
-                        User user= userRepository.findByusername("Lxlpc");
-                        if (user!=null){
-                            jsonObject.put("user_id",user.getUserId());
-                            jsonObject.put("user_name",user.getUsername());
-                jsonObject.put("roles",formatRole(user.getRoles()));
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonObject = new JSONObject();
+        try {
+            User user = userRepository.findByusername("Lxlpc");
+            if (user != null) {
+                jsonObject.put("user_id", user.getUserId());
+                jsonObject.put("user_name", user.getUsername());
+                jsonObject.put("roles", formatRole(user.getRoles()));
                 jsonArray.put(jsonObject);
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return  jsonArray.toString();
+        return jsonArray.toString();
 
     }
-     //格式化role
+
+    //格式化role
     public static JSONArray formatRole(Set<Role> roles) throws JSONException {
-        JSONArray jsonArray =new JSONArray();
+        JSONArray jsonArray = new JSONArray();
 
 
-        for (Role r:roles) {
+        for (Role r : roles) {
             JSONObject json = new JSONObject();
             json.put("role_id", r.getRoleId());
             json.put("role_name", r.getName());
-            json.put("power",formatPower(r.getPowers()));
+            json.put("power", formatPower(r.getPowers()));
             jsonArray.put(json);
         }
-        return  jsonArray;
+        return jsonArray;
 
     }
 
 
     //格式化power
-    public static  JSONArray formatPower(List<Power> powers) throws JSONException {
+    public static JSONArray formatPower(List<Power> powers) throws JSONException {
 
-        JSONArray    jsonArray =new JSONArray();
-        Boolean boole[] =new Boolean[powers.size()];
+        JSONArray jsonArray = new JSONArray();
+        Boolean boole[] = new Boolean[powers.size()];
 
-        for (int i=0;i<powers.size();i++)
-            boole[i] =false;
-            int i=0,j;
-        for (Power p:powers) {
-            if (!boole[i]){
-                JSONObject  jsonObject =null;
-                j=0;
-                for (Power e:powers) {
-                    if (j>=i && p.getType().equals(e.getType())){
-                        boole[i]=true;
-                        jsonObject =new JSONObject();
-                        jsonObject.put("power_id",e.getId());
-                        jsonObject.put("power_name",e.getName());
-                        jsonObject.put("power_type",e.getType());
+        for (int i = 0; i < powers.size(); i++)
+            boole[i] = false;
+        int i = 0, j;
+        for (Power p : powers) {
+            if (!boole[i]) {
+                JSONObject jsonObject = null;
+                j = 0;
+                for (Power e : powers) {
+                    if (j >= i && p.getType().equals(e.getType())) {
+                        boole[i] = true;
+                        jsonObject = new JSONObject();
+                        jsonObject.put("power_id", e.getId());
+                        jsonObject.put("power_name", e.getName());
+                        jsonObject.put("power_type", e.getType());
                         jsonArray.put(jsonObject);
                     }
-                    j=j+1;
+                    j = j + 1;
                 }
-                if (jsonArray.length()==powers.size()){
+                if (jsonArray.length() == powers.size()) {
                     break;
                 }
             }
             i++;
             System.out.println(i);
         }
-        return  jsonArray;
+        return jsonArray;
 
 
           /* JSONArray jsonArray =new JSONArray();
@@ -152,6 +168,47 @@ public class UserController {
 
     }
 
+    @RequestMapping(value = "/updateUser")
+    @ResponseBody
+    public Result updateUser(HttpServletRequest request, HttpServletResponse response) {
+        Result result = new Result();
+
+        try {
+
+            String sessionId = request.getSession().getId();
+
+
+            logger.info("UserController.updateUser is begin :" + sessionId);
+            String username = request.getParameter("username");
+
+            int id = Integer.valueOf(request.getParameter("id"));
+
+            String password = request.getParameter("password");
+
+
+            iUserServcie.updateUserById(id, username, password);
+            result.setCode(55555);
+            result.setMessage("更新成功！");
+            logger.info("transaction is exsit " + ptm);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("UserController.uodateUser is error :" + System.currentTimeMillis());
+            result.setCode(4444);
+            result.setMessage("更新失败！");
+
+            return result;
+        }
+
+        return result;
+
+    }
+    @RequestMapping(value = "/getCount")
+    @ResponseBody
+    public void getCount(String username){
+
+        iUserServcie.count(username);
+    }
 
 
 }

@@ -8,6 +8,9 @@ spring:
     max-idle: 8
     min-idle: 8
     initial-size: 10
+    #指定mybatis映射文件的地址
+  mybatis:
+      mapper-locations: classpath:mapper/*.xml
   jpa:
     database: MYSQL
     show-sql: true
@@ -38,8 +41,6 @@ spring:
     mode: HTML5
     servlet:
       content-type: text/html
-
-
 
 
 
