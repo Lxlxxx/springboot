@@ -17,7 +17,7 @@ public class Inner {
 
 
 
-         static class  Inner1{
+          static class  Inner1{
 
         public void getString(){
 
@@ -29,9 +29,23 @@ public class Inner {
 
     }
 
+     class  Inner2{
+
+        public void getString(){
+
+            System.out.println("我是静态内部类！！！！"+"\n"+"我要访问类Inner的key属性："+key+
+                    "\n"+"我要访问类Inner的value属性："+value);
+
+        }
+
+
+    }
+
     public static void main(String[] args) {
-        Inner.Inner1 inner1 =new Inner.Inner1();
-        inner1.getString();
+              Inner inner =new Inner();
+              Inner.Inner2  inner2  =inner.new Inner2();
+              Inner.Inner1 inner1 = new Inner.Inner1();
+              inner1.getString();
 
 
         ExecutorService executorService = Executors.newFixedThreadPool(3);
